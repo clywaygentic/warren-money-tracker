@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Money Adventure!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@500;600;700;800&display=swap');
+
+  :root{
+    --sky-top:#a8e6ff;
+    --sky-bot:#ffe9c7;
+    --sun:#ffd23f;
+    --grass:#7ed957;
+    --happy:#22c55e;
+    --sad:#ff6b6b;
+    --ink:#2d2a4a;
+    --card:#ffffff;
+    --pink:#ff7eb6;
+    --blue:#4ea8ff;
+    --purple:#a78bfa;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  body{
+    font-family:'Baloo 2',cursive,sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-bot) 100%);
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* floating clouds */
+  .cloud{
+    position:fixed;
+    background:#fff;
+    border-radius:100px;
+    opacity:.7;
+    filter:blur(.3px);
+    z-index:0;
+    animation:drift linear infinite;
+  }
+  .cloud::before,.cloud::after{
+    content:'';position:absolute;background:#fff;border-radius:50%;
+  }
+  .cloud::before{width:55%;height:140%;top:-40%;left:12%;}
+  .cloud::after{width:45%;height:120%;top:-25%;right:14%;}
+  @keyframes drift{
+    from{transform:translateX(-20vw);}
+    to{transform:translateX(120vw);}
+  }
+
+  /* ===== LOGIN ===== */
+  #lock{
+    position:fixed;inset:0;z-index:50;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#7cd4ff 0%,#ffd9a0 100%);
+    flex-direction:column;
+    transition:opacity .5s,transform .5s;
+  }
+  #lock.gone{opacity:0;transform:scale(1.1);pointer-events:none;}
+  .lockcard{
+    background:#fff;border-radius:36px;padding:42px 34px;
+    box-shadow:0 18px 0 rgba(0,0,0,.08),0 30px 60px rgba(0,0,0,.18);
+    text-align:center;max-width:380px;width:90%;
+    animation:pop .5s cubic-bezier(.18,1.4,.4,1);
+  }
+  @keyframes pop{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .vault{font-size:72px;animation:wiggle 2.5s ease-in-out infinite;display:inline-block;}
+  @keyframes wiggle{0%,100%{transform:rotate(-6deg);}50%{transform:rotate(6deg);}}
+  .lockcard h1{font-size:30px;margin:6px 0 4px;color:var(--ink);}
+  .lockcard p{font-family:'Fredoka';font-size:16px;color:#8a86a8;margin-bottom:22px;}
+  #pin{
+    font-family:'Baloo 2';font-size:34px;text-align:center;letter-spacing:14px;
+    width:100%;padding:14px;border:4px dashed #c9c5e8;border-radius:20px;
+    outline:none;color:var(--ink);background:#f7f6ff;
+  }
+  #pin:focus{border-color:var(--blue);}
+  .gobtn{
+    margin-top:18px;width:100%;border:none;cursor:pointer;
+    font-family:'Baloo 2';font-weight:800;font-size:22px;color:#fff;
+    background:linear-gradient(180deg,#ffb13f,#ff8a3f);
+    padding:16px;border-radius:20px;box-shadow:0 6px 0 #e06d1f;
+    transition:transform .1s,box-shadow .1s;
+  }
+  .gobtn:active{transform:translateY(4px);box-shadow:0 2px 0 #e06d1f;}
+  .hint{margin-top:14px;font-family:'Fredoka';font-size:13px;color:#a9a5c4;}
+  .shake{animation:shake .4s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-10px);}40%,80%{transform:translateX(10px);}}
+
+  /* ===== DASHBOARD ===== */
+  #app{position:relative;z-index:2;padding:24px 16px 60px;max-width:760px;margin:0 auto;display:none;}
+  .topbar{text-align:center;margin-bottom:18px;}
+  .topbar h2{font-size:34px;line-height:1.05;text-shadow:0 3px 0 rgba(255,255,255,.6);}
+  .topbar .sub{font-family:'Fredoka';font-size:15px;color:#5a567a;margin-top:2px;}
+
+  /* hero mood card */
+  .hero{
+    border-radius:34px;padding:28px 24px;text-align:center;color:#fff;
+    box-shadow:0 14px 0 rgba(0,0,0,.10),0 24px 44px rgba(0,0,0,.16);
+    position:relative;overflow:hidden;transition:background .6s;
+    margin-bottom:20px;
+  }
+  .hero.up{background:linear-gradient(150deg,#34d97b,#13b65a);}
+  .hero.down{background:linear-gradient(150deg,#ff8a8a,#ff5d6c);}
+  .hero .face{font-size:88px;line-height:1;animation:bounce 1.6s ease-in-out infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+  .hero .verdict{font-size:30px;font-weight:800;margin-top:4px;}
+  .hero .delta{font-family:'Fredoka';font-size:19px;opacity:.95;margin-top:2px;}
+  .sparkle{position:absolute;font-size:26px;opacity:.5;animation:twinkle 2s infinite;}
+
+  @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.8);}50%{opacity:.8;transform:scale(1.2);}}
+
+  /* number cards */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+  .ncard{
+    background:var(--card);border-radius:26px;padding:20px 16px;text-align:center;
+    box-shadow:0 8px 0 rgba(0,0,0,.06),0 14px 26px rgba(0,0,0,.10);
+  }
+  .ncard .emoji{font-size:40px;}
+  .ncard .label{font-family:'Fredoka';font-size:14px;color:#8a86a8;margin-top:4px;font-weight:600;}
+  .ncard .big{font-size:30px;font-weight:800;margin-top:2px;letter-spacing:-1px;}
+  .ncard.invest .big{color:var(--blue);}
+  .ncard.worth .big{color:var(--purple);}
+
+  /* grand total banner */
+  .total{
+    border-radius:34px;padding:24px;text-align:center;color:#fff;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,#7c5cff,#4ea8ff 60%,#34d0ff);
+    box-shadow:0 14px 0 rgba(0,0,0,.10),0 24px 44px rgba(0,0,0,.18);
+    margin-bottom:18px;
+  }
+  .total .tlabel{font-family:'Fredoka';font-weight:600;font-size:16px;opacity:.95;}
+  .total .tbig{font-size:46px;font-weight:800;letter-spacing:-1px;text-shadow:0 3px 0 rgba(0,0,0,.12);margin-top:2px;}
+
+  /* three pots */
+  .pots{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;}
+  .pot{
+    background:var(--card);border-radius:24px;padding:18px 10px;text-align:center;
+    box-shadow:0 8px 0 rgba(0,0,0,.06),0 14px 26px rgba(0,0,0,.10);
+  }
+  .pot .emoji{font-size:36px;}
+  .pot .label{font-family:'Fredoka';font-size:12px;color:#8a86a8;margin-top:4px;font-weight:600;line-height:1.2;}
+  .pot .potbig{font-size:20px;font-weight:800;margin-top:6px;letter-spacing:-.5px;}
+  .pot.savings .potbig{color:#13b65a;}
+  .pot.invest .potbig{color:var(--purple);}
+  .pot.spend .potbig{color:#ff8a3f;}
+
+  .btnrow{display:flex;gap:5px;justify-content:center;margin-top:10px;}
+  .mbtn{
+    border:none;cursor:pointer;font-family:'Baloo 2';font-weight:800;font-size:14px;
+    width:34px;height:34px;border-radius:12px;color:#fff;transition:transform .08s,box-shadow .08s;
+  }
+  .mbtn.plus{background:linear-gradient(180deg,#5be38d,#13b65a);box-shadow:0 3px 0 #0e8f46;}
+  .mbtn.minus{background:linear-gradient(180deg,#ff9d9d,#ff5d6c);box-shadow:0 3px 0 #d63a48;}
+  .mbtn:active{transform:translateY(3px);box-shadow:0 0 0;}
+  .autonote{font-family:'Fredoka';font-size:11px;color:#b3afce;margin-top:14px;}
+  .pop-anim{animation:numpop .3s;}
+  @keyframes numpop{0%{transform:scale(1);}40%{transform:scale(1.25);}100%{transform:scale(1);}}
+  @media(max-width:520px){
+    .pots{grid-template-columns:1fr;}
+    .total .tbig{font-size:38px;}
+  }
+
+  .hero .herotitle{font-family:'Fredoka';font-weight:600;font-size:15px;opacity:.95;margin-bottom:2px;}
+  .hero .investedline{font-family:'Fredoka';font-size:14px;opacity:.9;margin-top:8px;}
+
+  /* progress bar */
+  .progwrap{background:#fff;border-radius:24px;padding:18px 20px;margin-bottom:20px;
+    box-shadow:0 8px 0 rgba(0,0,0,.06),0 14px 26px rgba(0,0,0,.10);}
+  .progwrap .ptitle{font-family:'Fredoka';font-weight:600;font-size:14px;color:#8a86a8;margin-bottom:10px;text-align:center;}
+  .track{height:26px;background:#eee9ff;border-radius:40px;overflow:hidden;position:relative;}
+  .fill{height:100%;border-radius:40px;transition:width .8s cubic-bezier(.2,1,.3,1);width:0;
+    display:flex;align-items:center;justify-content:flex-end;padding-right:10px;
+    font-family:'Baloo 2';font-weight:700;color:#fff;font-size:13px;}
+  .fill.up{background:linear-gradient(90deg,#5be38d,#13b65a);}
+  .fill.down{background:linear-gradient(90deg,#ffb199,#ff5d6c);}
+
+  /* controls */
+  .panel{
+    background:#fff;border-radius:26px;padding:20px;
+    box-shadow:0 8px 0 rgba(0,0,0,.06),0 14px 26px rgba(0,0,0,.10);
+  }
+  .panel h3{font-size:20px;margin-bottom:4px;}
+  .panel .note{font-family:'Fredoka';font-size:13px;color:#a9a5c4;margin-bottom:16px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-family:'Fredoka';font-weight:600;font-size:14px;color:#6a6690;margin-bottom:6px;}
+  .field input{
+    width:100%;font-family:'Baloo 2';font-weight:700;font-size:22px;
+    padding:12px 16px;border:4px solid #eee9ff;border-radius:16px;outline:none;color:var(--ink);
+  }
+  .field input:focus{border-color:var(--blue);}
+  .shares{font-family:'Fredoka';font-size:13px;color:#a9a5c4;text-align:center;margin-top:6px;}
+  .resetbtn{
+    font-family:'Fredoka';font-weight:600;font-size:14px;cursor:pointer;
+    background:#fff;color:#8a86a8;border:3px solid #eee9ff;border-radius:16px;
+    padding:10px 20px;box-shadow:0 4px 0 rgba(0,0,0,.05);transition:transform .08s;
+  }
+  .resetbtn:active{transform:translateY(3px);}
+  .footer{text-align:center;font-family:'Fredoka';font-size:12px;color:#8a86a8;margin-top:24px;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<!-- clouds -->
+<div class="cloud" style="width:120px;height:42px;top:8%;animation-duration:48s;"></div>
+<div class="cloud" style="width:90px;height:34px;top:22%;animation-duration:62s;animation-delay:-20s;"></div>
+<div class="cloud" style="width:150px;height:50px;top:40%;animation-duration:72s;animation-delay:-40s;"></div>
+
+<!-- LOGIN -->
+<div id="lock">
+  <div class="lockcard">
+    <div class="vault">🔐</div>
+    <h1>Secret Money Vault</h1>
+    <p>Type the secret code to peek inside!</p>
+    <input id="pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
+    <button class="gobtn" onclick="tryUnlock()">Open the Vault! 🚀</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="app">
+  <div class="topbar">
+    <h2>🐼 Our China Money Adventure 🐼</h2>
+    <div class="sub">Watching our little money tree grow!</div>
+  </div>
+
+  <div class="total" id="total">
+    <span class="sparkle" style="top:14px;left:18px;">✨</span>
+    <span class="sparkle" style="top:24px;right:30px;animation-delay:.6s;">⭐</span>
+    <span class="sparkle" style="bottom:18px;left:40px;animation-delay:1s;">✨</span>
+    <div class="tlabel">💰 All my money together 💰</div>
+    <div class="tbig" id="grand">S$0.00</div>
+  </div>
+
+  <div class="pots">
+    <div class="pot savings">
+      <div class="emoji">🏦</div>
+      <div class="label">Savings (OCBC)</div>
+      <div class="potbig" id="savings">S$0.00</div>
+      <div class="btnrow">
+        <button class="mbtn minus" onclick="bump('sav',-1)">−1</button>
+        <button class="mbtn minus" onclick="bump('sav',-5)">−5</button>
+        <button class="mbtn plus" onclick="bump('sav',5)">+5</button>
+        <button class="mbtn plus" onclick="bump('sav',1)">+1</button>
+      </div>
+    </div>
+    <div class="pot invest">
+      <div class="emoji">📈</div>
+      <div class="label">Investment (China ETF)</div>
+      <div class="potbig" id="worth">S$0.00</div>
+      <div class="autonote">updates with the price below ✨</div>
+    </div>
+    <div class="pot spend">
+      <div class="emoji">💳</div>
+      <div class="label">Spending (Revolut)</div>
+      <div class="potbig" id="spending">S$0.00</div>
+      <div class="btnrow">
+        <button class="mbtn minus" onclick="bump('spend',-1)">−1</button>
+        <button class="mbtn minus" onclick="bump('spend',-5)">−5</button>
+        <button class="mbtn plus" onclick="bump('spend',5)">+5</button>
+        <button class="mbtn plus" onclick="bump('spend',1)">+1</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero up" id="hero">
+    <div class="herotitle">How's my investment doing?</div>
+    <div class="face" id="face">😀</div>
+    <div class="verdict" id="verdict">We're up!</div>
+    <div class="delta" id="delta">+S$0.00</div>
+    <div class="investedline" id="investedline">We put in S$3,370.46</div>
+  </div>
+
+  <div class="progwrap">
+    <div class="ptitle" id="ptitle">How our money is doing 🌱</div>
+    <div class="track"><div class="fill up" id="fill">0%</div></div>
+  </div>
+
+  <div class="panel">
+    <h3>🔢 Update the numbers</h3>
+    <div class="note">Type today's price and exchange rate — everything updates by magic! ✨</div>
+    <div class="field">
+      <label>📈 Today's MCHI price (in US dollars)</label>
+      <input id="price" type="number" step="0.01" value="55.54">
+    </div>
+    <div class="field">
+      <label>💱 How many SGD is 1 US dollar?</label>
+      <input id="fx" type="number" step="0.0001" value="1.2795">
+    </div>
+    <div class="shares">🧮 We own <b>43.338</b> shares of MCHI</div>
+  </div>
+
+  <div style="text-align:center;margin-top:18px;">
+    <button class="resetbtn" onclick="resetAmounts()">↺ Reset to starting amounts</button>
+  </div>
+
+  <div class="footer">
+    This is a fun helper, not real financial advice 💛<br>
+    Prices change all the time — type in new numbers to see the latest!
+  </div>
+</div>
+
+<script>
+  const SHARES = 43.338;
+  const INVESTED = 3370.46;
+  const START_SAVINGS = 2814.25;   // OCBC savings (starting amount)
+  const START_SPENDING = 308.00;   // Revolut spending money (starting amount)
+  const CODE = "0317";
+
+  // these can change with the buttons
+  let savingsAmt = START_SAVINGS;
+  let spendingAmt = START_SPENDING;
+
+  // remember values permanently on this device
+  function save(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+
+  function tryUnlock(){
+    const pin = document.getElementById('pin');
+    if(pin.value === CODE){
+      document.getElementById('lock').classList.add('gone');
+      document.getElementById('app').style.display='block';
+      setTimeout(()=>{ document.getElementById('lock').style.display='none'; },550);
+      update();
+    } else {
+      const card = document.querySelector('.lockcard');
+      card.classList.add('shake');
+      pin.value='';
+      setTimeout(()=>card.classList.remove('shake'),420);
+    }
+  }
+  document.getElementById('pin').addEventListener('keydown',e=>{ if(e.key==='Enter') tryUnlock(); });
+
+  function money(n){
+    return 'S$'+n.toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function bump(which, amount){
+    if(which==='sav'){
+      savingsAmt = Math.max(0, savingsAmt + amount);
+      save('savings', savingsAmt);
+      popAnim('savings');
+    } else {
+      spendingAmt = Math.max(0, spendingAmt + amount);
+      save('spending', spendingAmt);
+      popAnim('spending');
+    }
+    update();
+  }
+
+  function popAnim(id){
+    const el = document.getElementById(id);
+    el.classList.remove('pop-anim');
+    void el.offsetWidth;          // restart the animation
+    el.classList.add('pop-anim');
+  }
+
+  function resetAmounts(){
+    savingsAmt = START_SAVINGS;
+    spendingAmt = START_SPENDING;
+    save('savings', savingsAmt);
+    save('spending', spendingAmt);
+    popAnim('savings'); popAnim('spending');
+    update();
+  }
+
+  function update(){
+    const price = parseFloat(document.getElementById('price').value)||0;
+    const fx = parseFloat(document.getElementById('fx').value)||0;
+    save('price',price); save('fx',fx);
+
+    const worthSGD = SHARES * price * fx;
+    const diff = worthSGD - INVESTED;
+    const pct = INVESTED ? (diff/INVESTED*100) : 0;
+    const up = diff >= 0;
+
+    const grand = savingsAmt + worthSGD + spendingAmt;
+
+    document.getElementById('grand').textContent = money(grand);
+    document.getElementById('savings').textContent = money(savingsAmt);
+    document.getElementById('spending').textContent = money(spendingAmt);
+    document.getElementById('worth').textContent = money(worthSGD);
+    document.getElementById('investedline').textContent = 'We put in '+money(INVESTED);
+
+    const hero = document.getElementById('hero');
+    const face = document.getElementById('face');
+    const verdict = document.getElementById('verdict');
+    const delta = document.getElementById('delta');
+    const fill = document.getElementById('fill');
+    const ptitle = document.getElementById('ptitle');
+
+    hero.className = 'hero ' + (up?'up':'down');
+    fill.className = 'fill ' + (up?'up':'down');
+
+    if(up){
+      face.textContent = pct>20 ? '🤩' : '😀';
+      verdict.textContent = pct>20 ? 'WOW, we\'re way up!' : 'Yay, we\'re up! 🎉';
+      delta.textContent = '+'+money(diff)+'  ('+pct.toFixed(1)+'%)';
+      ptitle.textContent = 'Our money grew bigger! 🌳';
+    } else {
+      face.textContent = pct<-15 ? '😟' : '😕';
+      verdict.textContent = 'A little down right now';
+      delta.textContent = money(diff)+'  ('+pct.toFixed(1)+'%)';
+      ptitle.textContent = 'Our money is resting — it goes up and down! 🌱';
+    }
+
+    // progress fill = worth vs invested, capped 0–150% for visual
+    let ratio = INVESTED ? (worthSGD/INVESTED*100) : 0;
+    let shown = Math.max(4, Math.min(ratio, 150));
+    fill.style.width = (shown/1.5)+'%';   // scale so 150% fills the bar
+    fill.textContent = Math.round(ratio)+'%';
+  }
+
+  ['price','fx'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',update);
+  });
+
+  // restore saved session values
+  const sp = load('price'), sf = load('fx');
+  if(sp) document.getElementById('price').value = sp;
+  if(sf) document.getElementById('fx').value = sf;
+  const ssav = load('savings'), sspd = load('spending');
+  if(ssav!==null) savingsAmt = parseFloat(ssav);
+  if(sspd!==null) spendingAmt = parseFloat(sspd);
+
+  window.addEventListener('load',()=>document.getElementById('pin').focus());
+</script>
+</body>
+</html>
